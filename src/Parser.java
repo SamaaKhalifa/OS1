@@ -30,7 +30,7 @@ class Parser {
                 commandName = input;
                 args = null;
             }
-        }
+
     };
 
     public String getCommandName() {
@@ -48,7 +48,7 @@ class Terminal {
     String HomePath = System.getProperty("user.home");
     File h = new File(HomePath);
 
-    public static String CurrentPath;
+    String CurrentPath;
 
     public Terminal() {
         if (h.isDirectory()) {
@@ -125,7 +125,6 @@ class Terminal {
             }
         }
     }
-
     public void pwd() {
         String pwd = System.getProperty("user.dir");
         System.out.println(pwd);
