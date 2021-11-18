@@ -19,7 +19,7 @@ class Parser {
         int x= input.indexOf(" ");
         if(x>=0){
             commandName=input.substring(0,x);
-            args=input.substring(x).split(" ");
+            args=input.substring(x+1).split(" ");
         }
         else{
            commandName=input;
@@ -38,36 +38,53 @@ class Terminal {
     Parser parser=new Parser();
     String HomePath=System.getProperty("user.home")+"\\OS";
     File h=new File(HomePath);
-    String CurrentPath=HomePath;
-    public static boolean isPathValid(String path) {
-        try {
-
-            Paths.get(path);
-
-        } catch (InvalidPathException ex) {
-            return false;
+    String CurrentPath;
+    public Terminal(){
+        if(h.isDirectory()){
+            System.setProperty("user.dir",h.getAbsolutePath());
         }
-
-        return true;
+        CurrentPath=HomePath;
+    }
+    public static boolean isPathValid(String path) {
+        File s= new File(path);
+        if(s.exists()) return true;
+        else return false;
     }
     //Implement each command in a method, for example:
     public void echo(String arg){
         System.out.println(arg);
     }
-    public void cd(String[] arg){
-        if(arg==null){
-                CurrentPath=HomePath;
-        }else{
-            if(arg[0]==".."){
-                int x= CurrentPath.lastIndexOf('/');
-                if(isPathValid(CurrentPath.substring(0,x)))CurrentPath=CurrentPath.substring(0,x);
-            }else{
-                if(isPathValid(arg[0])) CurrentPath=arg[0];
-                else System.out.println("invalid Path\n");
+   public void cd(String[] arg) {
+       String st=CurrentPath;
+       if (arg == null) {
+           CurrentPath = HomePath;
+       }
+        else {
+           // System.out.println(arg[0]);
+            if (arg[0].equals("..")) {
+                //System.out.println("case ..");
+                int x = CurrentPath.lastIndexOf('\\');
+                if (isPathValid(CurrentPath.substring(0, x)))
+                    CurrentPath = CurrentPath.substring(0, x);
+            } else {
+                if (arg[0].contains("\\")) {
+                    System.out.println("with \\");
+                        CurrentPath = arg[0];
+
+                } else {
+                    System.out.println("without");
+                        CurrentPath = CurrentPath + "\\" + arg[0];
+
+                }
+
+            }
         }
-        }
-        System.out.println(CurrentPath);
-    }
+       if (!isPathValid(CurrentPath)){
+           CurrentPath=st;
+       }
+       System.setProperty("user.dir", CurrentPath);
+       System.out.println(CurrentPath);
+   }
     public void  ls()  {
         File dir=new File(CurrentPath);
         File dir1 = new File(System.setProperty("user.dir",dir.getAbsolutePath()));
@@ -91,14 +108,16 @@ class Terminal {
             }
         }
     }
+    public void pwd() {
+        String pwd = System.getProperty("user.dir");
+        System.out.println(pwd);
+    }
 //This method will choose the suitable command method to be called
     public void chooseCommandAction(){
-        if(h.isDirectory()){
-            System.setProperty("user.dir",h.getAbsolutePath());
-        }
+
         String CommName=parser.getCommandName();
         String[] argument= parser.getArgs();
-        //System.out.println(CommName+" Hello");
+        //System.out.println(argument);
         if(CommName.contains("echo")){
             this.echo(argument[1]);
         }else if(CommName.contains("cd")){
@@ -107,18 +126,20 @@ class Terminal {
                this.ls();
         }else if(CommName.contains("ls-r")){
                 this.lsR();
+        }else if(CommName.equals("pwd")){
+            this.pwd();
         }
     };
     public static void main(String[] args){
         String input;
         Scanner sc=new Scanner(System.in);
         System.out.println("Enter the input:");
+        Terminal t=new Terminal();
         while(true){
             input=sc.nextLine();
             if(input.contains("exit")){
                 break;
             }
-            Terminal t=new Terminal();
             t.parser.parse(input);
             t.chooseCommandAction();
         }
