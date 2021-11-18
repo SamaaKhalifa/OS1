@@ -1,8 +1,12 @@
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -31,7 +35,8 @@ class Parser {
                 args = null;
             }
 
-    };
+        }
+    }
 
     public String getCommandName() {
         return commandName;
@@ -125,31 +130,32 @@ class Terminal {
             }
         }
     }
+
     public void pwd() {
         String pwd = System.getProperty("user.dir");
         System.out.println(pwd);
     }
 
     public void mkdir(String[] fileName) {
-         for (int i = 0; i < fileName.length;i++){
-              File dir; 
-              if (fileName.length == 0) {
-      System.out.println("you didn't enter arguments"); }
-       else { 
-           if(fileName[i].contains("\\")) 
-           { dir = new File(fileName[i]); } 
-           else { 
-               dir =new File(CurrentPath + "\\" + fileName[i]); }
-                if (!dir.exists()) {
-                     boolean result = dir.mkdir(); // Create the directory
-                    if (result) {
-                    System.out.println("directory " + (i + 1) + " created ");
-                     } 
+        for (int i = 0; i < fileName.length; i++) {
+            File dir;
+            if (fileName.length == 0) {
+                System.out.println("you didn't enter arguments");
+            } else {
+                if (fileName[i].contains("\\")) {
+                    dir = new File(fileName[i]);
+                } else {
+                    dir = new File(CurrentPath + "\\" + fileName[i]);
                 }
-                else {
-                     System.out.println("The directory " + (i + 1) + " already exists"); 
-                     }
-            } 
+                if (!dir.exists()) {
+                    boolean result = dir.mkdir(); // Create the directory
+                    if (result) {
+                        System.out.println("directory " + (i + 1) + " created ");
+                    }
+                } else {
+                    System.out.println("The directory " + (i + 1) + " already exists");
+                }
+            }
         }
         return;
 
@@ -179,44 +185,39 @@ class Terminal {
 
     }
 
-    public void cpr(String[] args) { // two arguments need to be handeled
+    public void cpr(String[] args) throws IOException { // two arguments need to be handeled
 
         if (args.length < 2) {
             System.out.println("please enter two directories");
         } else {
             String source = CurrentPath + "\\" + args[0];
             File srcDir = new File(source);
-
             String destination = CurrentPath + "\\" + args[1];
             File destDir = new File(destination);
-
-            try {
-
-                copyDirectory(srcDir, destDir);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            copyDirectory(srcDir,destDir);
 
         }
     }
 
-    private static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException {
-        if (!destinationDirectory.exists()) {
-            destinationDirectory.mkdir();
-        }
-        for (String f : sourceDirectory.list()) {
-            copyDirectoryCompatibityMode(new File(sourceDirectory, f), new File(destinationDirectory, f));
+    private  void copyDirectory(File sourceDir, File targetDir) throws IOException {
+        if (sourceDir.isDirectory()) {
+            copyDirectoryRecursively(sourceDir, targetDir); 
+        } else {
+            Files.copy(sourceDir.toPath(), targetDir.toPath()); // copy if it is a file
         }
     }
 
-    public static void copyDirectoryCompatibityMode(File source, File destination) throws IOException {
-        if (source.isDirectory())
-            copyDirectory(source, destination);
-
+    private  void copyDirectoryRecursively(File source, File target) throws IOException {
+        if (!target.exists()) {
+            target.mkdir();
+        }
+        for (String child : source.list()) {
+            copyDirectory(new File(source, child), new File(target, child));
+        }
     }
 
     public void rm(String[] args) {
-        File file = new File(CurrentPath + args[1]);
+        File file = new File(CurrentPath + "\\" + args[0]);
         if (file.exists()) {
             file.delete();
         } else {
@@ -276,13 +277,12 @@ class Terminal {
             this.ls();
         } else if (CommName.contains("ls-r")) {
             this.lsR();
+        } else if (CommName.contains("cp-r")) {
+            this.cpr(argument);
+        
         } else if (CommName.contains("cp")) {
             this.cp(argument);
         }
-        else if (CommName.contains("cp -r")) {
-            this.cat(argument);
-        }
- 
         else if (CommName.contains("cat")) {
             this.cat(argument);
         }
@@ -290,7 +290,6 @@ class Terminal {
         else if (CommName.contains("rm")) {
             this.rm(argument);
         }
-     
 
         else if (CommName.contains("pwd")) {
             this.pwd();
@@ -302,7 +301,7 @@ class Terminal {
             this.rmdir(argument[1]);
         } else if (CommName.contains("touch")) {
             try {
-                this.touch();
+                this.touch(argument[0]);
             } catch (IOException e) {
                 e.printStackTrace();
             }
